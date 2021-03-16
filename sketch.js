@@ -1,67 +1,90 @@
-//Create variables here
+//Project 36 ------ Virtual Pet 2
 var database;
-var dogImage;
-var happydogImage;
-var foodS;
-var dog;
+var foodS, dog;
+var dogImage, happyDogImage;
+
+var feedButton, addFoodButton;
+
+var feedTime;
+var foodObj;
 
 function preload(){
-  dogImage = loadImage("images/dogImg.png");
-  happydogImage=loadImage("images/dogImg1.png");
+  dogImage = loadImage("images/dog.png");
+  happyDogImage = loadImage("images/happyDog.png");
 }
+	
 
 
 function setup() {
-	createCanvas(500,500);
-  database=firebase.database();
+  createCanvas(1200,400);
 
-  dog=createSprite(250,250);
+  database = firebase.database();
+  
+  dog = createSprite(800,250);
   dog.addImage(dogImage);
+  dog.scale = 0.35;
 
-  var foodStockRef = database.ref('foodStock');
-  foodStockRef.on("value",readStock);
-  
-}
+  feedButton = createButton("Feed the dog");
+  feedButton.position(width/2-50,80);
 
+  addFoodButton = createButton("Add food to the stock");
+  addFoodButton.position(width/2+50,80);
 
-function draw() { 
-  background(87);
-  
+  foodObj = new Food();
+
+  var feedTimeRef = database.ref('lastFed');
+  feedTimeRef.on("value",function(data){
+    feedTime = data.val();
+  });
+
  
-     {
-        writeStock(foodS);
-        dog.addImage(happydogImage);
+}
+
+
+function draw() {  
+  background(46,139,87);
+
+  if (feedTime !== undefined){
+    fill(255);
+    textSize(15);
+    if(feedTime>=12){
+      text("Last Feed: "+ feedTime%12 + " PM", width-150,80);
     }
-     
-    
-  drawSprites();
-  //add styles here
-
-}
-
-function readStock(data){
-  foodS=data.val();
-}
-
-function writeStock (x){
-  if(x<=0){
-    x=0;
-  }else{
-    x=x-1;
+    else if(feedTime===0){
+      text("Last Feed: 12 AM ", width-150,80);
+    }
+    else{
+      text("Last Feed: "+ feedTime + " AM", width-150,80);
+    }
   }
-  
-  database.ref('/').update({
-    'foodStock': x
-  })
-}
-fedTime=database.ref('FeedTime');
-        fedTime.on("value",function(data)){
-            lastFed=data.val();
-            feed=createButton("feed the dog")
-            feed.position(700,95);
-            feed.mousePressed(feedDog);
 
-            addFood=createButton("Add Food")
-            addFood.position(800,95);
-            addFood.mousePressed(addFoods);
-      }
+  foodObj.getFoodStock();
+  foodObj.display();
+  drawSprites();
+
+  feedButton.mousePressed(function(){
+    dog.addImage(happyDogImage);
+    foodObj.getFoodStock();
+    foodS = foodS-1;
+    foodObj.updateFoodStock(foodS);
+    feedTime = hour();
+    database.ref('/').update({
+      lastFed: feedTime
+    })
+    
+
+  });
+
+  addFoodButton.mousePressed(function(){
+    foodS+=1;
+    foodObj.updateFoodStock(foodS);
+  });
+
+  
+  
+
+}
+
+
+
+
